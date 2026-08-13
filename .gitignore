@@ -8,6 +8,8 @@
 *.so
 *.dylib
 out
+# add exact this name at current path
+
 
 # Test binary, built with `go test -c`
 *.test
