@@ -82,10 +82,12 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type returnValid struct {
-		Valid bool `json:"valid"`
+		Body string `json:"cleaned_body"`
 	}
+	cleanedBody := msg.Body
+
 	respBody := returnValid{
-		Valid: true,
+		Body: cleanedBody,
 	}
 
 	// If the Chirp is valid, respond with a 200 code and this body - valid: true
