@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
+	"strings"
 	"sync/atomic"
 )
 
@@ -75,7 +77,6 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// check if msg length is 140 or less, otherwise return JSON with error string
 	if len(msg.Body) > 140 {
 		respondWithError(w, 400, "Chirp is too long")
 		return
@@ -84,16 +85,31 @@ func validateChirpHandler(w http.ResponseWriter, r *http.Request) {
 	type returnValid struct {
 		Body string `json:"cleaned_body"`
 	}
-	cleanedBody := msg.Body
 
 	respBody := returnValid{
-		Body: cleanedBody,
+		Body: cleanChirpBody(msg.Body),
 	}
 
-	// If the Chirp is valid, respond with a 200 code and this body - valid: true
 	respondWithJSON(w, http.StatusOK, respBody)
-
 }
+
+// cleanChirpBody replaces any profane word with "****". A word only counts
+// when it stands alone: it must be delimited by whitespace or the edges of
+// the string, and may appear in any mix of upper/lower case. Text with
+// punctuation attached (e.g. "Sharbert!") is a different word, left alone.
+func cleanChirpBody(body string) string {
+	profaneWords := []string{"kerfuffle", "sharbert", "fornax"}
+	return tokenPattern.ReplaceAllStringFunc(body, func(token string) string {
+		for _, word := range profaneWords {
+			if strings.EqualFold(token, word) {
+				return "****"
+			}
+		}
+		return token
+	})
+}
+
+var tokenPattern = regexp.MustCompile(`\S+`)
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
 	type returnErr struct {
